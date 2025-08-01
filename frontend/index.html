@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>قائمة العقارات</title>
+    <style>
+      body {
+        font-family: sans-serif;
+        background-color: #f9f9f9;
+        margin: 0;
+        padding: 0;
+      }
+      header {
+        background-color: #2c3e50;
+        color: white;
+        text-align: center;
+        padding: 1rem;
+      }
+      .filters-row {
+        background: #ecf0f1;
+        padding: 1rem;
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 10px;
+      }
+      .filters-row button {
+        padding: 8px 12px;
+        background: #3498db;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+      }
+      .filters-row button.active-filter {
+        border: 2px solid black;
+        background-color: #2980b9;
+      }
+      .cards-container {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+        gap: 20px;
+        padding: 20px;
+        justify-items: center;
+      }
+      .card {
+        background: white;
+        border-radius: 10px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+      }
+      .card > img {
+        width: 100%;
+        height: 200px;
+        object-fit: cover;
+        display: block;
+      }
+      .card-content {
+        padding: 15px;
+      }
+      .badge {
+        display: inline-block;
+        padding: 5px 10px;
+        border-radius: 20px;
+        font-size: 0.9rem;
+        color: white;
+        margin-bottom: 10px;
+      }
+      .available {
+        background-color: #27ae60;
+      }
+      .sold {
+        background-color: #c0392b;
+      }
+      .reserved {
+        background-color: #f39c12;
+      }
+      .card-content h3 {
+        margin: 5px 0 10px;
+      }
+      .card-content p {
+        margin: 5px 0;
+        color: #555;
+      }
+      .card-actions {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: space-between;
+        padding: 0 15px 15px;
+        gap: 10px;
+      }
+      .card-actions a {
+        text-decoration: none;
+        background-color: #16a085;
+        color: white;
+        padding: 3px 6px;
+        font-size: 0.75rem;
+        border-radius: 4px;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+      }
+      .card-actions a:hover {
+        background-color: #138d75;
+      }
+      .card-actions a img.icon {
+        width: 12px;
+        height: 12px;
+        display: inline-block;
+      }
+      .carousel {
+        position: relative;
+        width: 100%;
+        height: 250px;
+        overflow: hidden;
+      }
+      .carousel-img {
+        width: 100%;
+        height: 200px;
+        object-fit: cover;
+      }
+      .carousel button {
+        position: absolute;
+        top: 50%;
+        transform: translateY(-50%);
+        background: rgba(0, 0, 0, 0.5);
+        color: white;
+        border: none;
+        font-size: 1.5rem;
+        padding: 5px 10px;
+        cursor: pointer;
+        z-index: 2;
+      }
+      .carousel .prev {
+        right: 10px;
+      }
+      .carousel .next {
+        left: 10px;
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>قائمة العقارات</h1>
+    </header>
+    <div class="filters-row status-filters">
+      <button onclick="filterStatus('all')">الكل</button>
+      <button onclick="filterStatus('available')">متاح</button>
+      <button onclick="filterStatus('sold')">مباع</button>
+      <button onclick="filterStatus('reserved')">محجوز</button>
+    </div>
+    <div class="filters-row type-filters">
+      <button onclick="filterType('all')">كل الأنواع</button>
+      <button onclick="filterType('أرض')">أرض</button>
+      <button onclick="filterType('دبلكس')">دبلكس</button>
+      <button onclick="filterType('شقق تمليك')">شقق تمليك</button>
+      <button onclick="filterType('شقق إيجار')">شقق إيجار</button>
+      <button onclick="filterType('عقود إيجار')">عقود إيجار</button>
+    </div>
+    <div class="filters-row sort-filters">
+      <button onclick="sortByPrice('none')">الترتيب الافتراضي</button>
+      <button onclick="sortByPrice('asc')">الأقل سعرًا</button>
+      <button onclick="sortByPrice('desc')">الأعلى سعرًا</button>
+    </div>
+    <section class="cards-container" id="cards"></section>
+    <script>
+      let allProperties = [];
+      let currentStatus = "all";
+      let currentType = "all";
+      let currentSort = "none";
+
+      function createCard(property) {
+        const statusClasses = {
+          available: "متاح",
+          sold: "مباع",
+          reserved: "محجوز",
+        };
+        const statusColor = {
+          available: "available",
+          sold: "sold",
+          reserved: "reserved",
+        };
+        return `
+    <div class="card" data-status="${property.status}" data-type="${property.type}">
+      <div class="carousel" data-index="0" data-images='${JSON.stringify(property.images)}'>
+        <img src="${property.images[0]}" alt="${property.title}" class="carousel-img">
+        <button class="prev">‹</button>
+        <button class="next">›</button>
+      </div>
+      <div class="card-content">
+        <span class="badge ${statusColor[property.status]}">${statusClasses[property.status]}</span>
+        <h3>${property.title}</h3>
+        <p>النوع: ${property.type}</p>
+        <p>المساحة: ${property.size}</p>
+        <p>السعر: ${property.price}</p>
+        <p>عدد الشوارع: ${property.streets}</p>
+        <p>رخصة فال: ${property.license_type}</p>
+        <p>رقم الترخيص: ${property.license_number}</p>
+        <p>رقم السجل: ${property.registry_number}</p>
+        <p>رقم المعلن: ${property.Advertiser_Number}</p>
+
+        <p>${property.description}</p>
+      </div>
+      <div class="card-actions">
+        <a href="${property.location}" target="_blank">الموقع</a>
+        <a href="https://wa.me/966${property.whatsapp}" target="_blank">
+          <img src="https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg" class="icon"> واتساب
+        </a>
+        <a href="tel:${property.phone}">
+          <img src="https://upload.wikimedia.org/wikipedia/commons/8/8c/Phone_font_awesome.svg" class="icon"> اتصال
+        </a>
+      </div>
+    </div>`;
+      }
+
+      function renderCards(list) {
+        document.getElementById("cards").innerHTML = list.map(createCard).join("");
+      }
+
+      function applyFilters() {
+        let filtered = allProperties;
+        if (currentStatus !== "all") filtered = filtered.filter(p => p.status === currentStatus);
+        if (currentType !== "all") filtered = filtered.filter(p => p.type === currentType);
+        if (currentSort === 'asc') filtered.sort((a, b) => a.price - b.price);
+        else if (currentSort === 'desc') filtered.sort((a, b) => b.price - a.price);
+        renderCards(filtered);
+      }
+
+      function filterStatus(status) {
+        currentStatus = status;
+        applyFilters();
+        activateButton('status-filters', status, 'status');
+      }
+
+      function filterType(type) {
+        currentType = type;
+        applyFilters();
+        activateButton('type-filters', type, 'type');
+      }
+
+      function sortByPrice(direction) {
+        currentSort = direction;
+        applyFilters();
+        activateButton('sort-filters', direction, 'sort');
+      }
+
+      function activateButton(containerClass, value, type) {
+        const container = document.querySelector(`.${containerClass}`);
+        container.querySelectorAll("button").forEach(btn => {
+          const text = btn.innerText.trim();
+          const shouldActivate =
+            (type === 'status' && text.includes(statusText(value))) ||
+            (type === 'type' && text === value) ||
+            (type === 'sort' && text.includes(sortText(value))) ||
+            (value === 'all' && (text.includes('الكل') || text === 'كل الأنواع'));
+          btn.classList.toggle('active-filter', shouldActivate);
+        });
+      }
+
+      function statusText(key) {
+        return { available: 'متاح', sold: 'مباع', reserved: 'محجوز' }[key] || '';
+      }
+
+      function sortText(key) {
+        return { asc: 'الأقل سعرًا', desc: 'الأعلى سعرًا', none: 'الترتيب الافتراضي' }[key] || '';
+      }
+
+      async function loadProperties() {
+        try {
+          const res = await fetch("http://localhost:3000/properties");
+          const data = await res.json();
+          allProperties = data;
+          applyFilters();
+        } catch (err) {
+          console.error("فشل في تحميل العقارات:", err);
+        }
+      }
+
+      loadProperties();
+      document.addEventListener("click", function (event) {
+        if (event.target.classList.contains("prev") || event.target.classList.contains("next")) {
+          const carousel = event.target.closest(".carousel");
+          const imgs = JSON.parse(carousel.getAttribute("data-images"));
+          let index = parseInt(carousel.getAttribute("data-index"));
+          if (event.target.classList.contains("next")) index = (index + 1) % imgs.length;
+          else index = (index - 1 + imgs.length) % imgs.length;
+          carousel.querySelector(".carousel-img").src = imgs[index];
+          carousel.setAttribute("data-index", index);
+        }
+        if (event.target.classList.contains("carousel-img")) {
+          document.getElementById("modalImage").src = event.target.src;
+          document.getElementById("imageModal").style.display = "flex";
+        }
+        if (event.target.id === "closeModal") {
+          document.getElementById("imageModal").style.display = "none";
+        }
+      });
+    </script>
+    <div id="imageModal" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.8); justify-content:center; align-items:center; z-index:9999;">
+      <span id="closeModal" style="position:absolute; top:20px; right:30px; font-size:2rem; color:white; cursor:pointer;">✖</span>
+      <img id="modalImage" src="" style="max-width:90%; max-height:90%; border:5px solid white; border-radius:10px;" />
+    </div>
+    
+    <footer>
+      <p style="text-align: center; padding: 1rem; background-color: #2c3e50; color: white;">
+        © 2025 قائمة العقارات
+      </p>
+  </body>
+</html>
