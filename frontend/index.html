@@ -270,7 +270,7 @@
 
       async function loadProperties() {
         try {
-          const res = await fetch("https://properties-project-api.onrender.com/");
+          const res = await fetch("https://properties-project-api.onrender.com/properties");
           const data = await res.json();
           allProperties = data;
           applyFilters();
