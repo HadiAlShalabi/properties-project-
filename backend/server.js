@@ -112,6 +112,8 @@ app.delete('/properties/:id', async (req, res) => {
 });
 
 // ✅ تشغيل السيرفر
-app.listen(3000, () => {
-  console.log('🟢 السيرفر يعمل على http://localhost:3000');
+const port = process.env.PORT || 3000;
+
+app.listen(port, () => {
+  console.log(`🟢 السيرفر يعمل على http://localhost:${port}`);
 });
